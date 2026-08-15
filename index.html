@@ -277,7 +277,18 @@ button {
 
 
 <script>
+function keypadInput(number) {
+    document.getElementById("damage").value += number;
+}
 
+function keypadBackspace() {
+    const input = document.getElementById("damage");
+    input.value = input.value.slice(0, -1);
+}
+
+function keypadClear() {
+    document.getElementById("damage").value = "";
+}
 let bosses =
     JSON.parse(localStorage.getItem("bosses")) || {};
 
