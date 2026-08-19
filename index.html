@@ -217,6 +217,11 @@ button {
     class="damage-button"
     onclick="applyDamage()">
     ダメージ適用
+<button
+    class="damage-button"
+    onclick="applyHeal()">
+    回復
+</button>
 </button>
 
     <br>
@@ -544,13 +549,14 @@ function applyDamage() {
         return;
     }
 
-    lastDamage = damage;
-
     // Undo用に現在HPを保存
     hpHistory.push(currentHP);
 
     // ダメージ履歴に追加
-    damageHistory.push(damage);
+    damageHistory.push({
+        type: "damage",
+        value: damage
+    });
 
     currentHP -= damage;
 
@@ -558,11 +564,47 @@ function applyDamage() {
         currentHP = 0;
     }
 
+    // 入力欄をクリア
+    damageInput.value = "";
 
-updateDisplay();
-updateDamageHistory();
-damageInput.value = "";
+    updateDisplay();
+    updateDamageHistory();
 }
+
+
+function applyHeal() {
+
+    const heal =
+        Number(damageInput.value);
+
+    if (!heal || heal <= 0) {
+        return;
+    }
+
+    // Undo用に現在HPを保存
+    hpHistory.push(currentHP);
+
+    // 回復履歴に追加
+    damageHistory.push({
+        type: "heal",
+        value: heal
+    });
+
+    currentHP += heal;
+
+    // 最大HPを超えない
+    if (currentHP > maxHP) {
+        currentHP = maxHP;
+    }
+
+    // 入力欄をクリア
+    damageInput.value = "";
+
+    updateDisplay();
+    updateDamageHistory();
+}
+
+
 function undoDamage() {
 
     if (hpHistory.length === 0) {
@@ -572,12 +614,26 @@ function undoDamage() {
     currentHP =
         hpHistory.pop();
 
-    // 最新のダメージ履歴を削除
+    // 最新の履歴を削除
     damageHistory.pop();
 
     updateDisplay();
     updateDamageHistory();
+}
 
+
+damageInput.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (event.key === "Enter") {
+
+            applyDamage();
+
+        }
+
+    }
+);
 }
 damageInput.addEventListener(
     "keydown",
@@ -671,11 +727,22 @@ function updateDamageHistory() {
     const history =
         document.getElementById("damageHistory");
 
+
+    // ダメージだけを累計
     const totalDamage =
         damageHistory.reduce(
-            (sum, damage) => sum + damage,
+            (sum, item) => {
+
+                if (item.type === "damage") {
+                    return sum + item.value;
+                }
+
+                return sum;
+
+            },
             0
         );
+
 
     document.getElementById("totalDamage")
         .textContent =
@@ -699,7 +766,7 @@ function updateDamageHistory() {
     // 新しいものから表示
     [...damageHistory]
         .reverse()
-        .forEach((damage, index) => {
+        .forEach((item, index) => {
 
             const div =
                 document.createElement("div");
@@ -707,10 +774,24 @@ function updateDamageHistory() {
             div.className =
                 "history-item";
 
-            div.textContent =
-                (index + 1) +
-                ".  -" +
-                damage.toLocaleString();
+
+            if (item.type === "damage") {
+
+                div.textContent =
+                    (index + 1) +
+                    ".  -" +
+                    item.value.toLocaleString();
+
+            } else {
+
+                div.textContent =
+                    (index + 1) +
+                    ".  +" +
+                    item.value.toLocaleString() +
+                    " 回復";
+
+            }
+
 
             history.appendChild(div);
 
