@@ -109,7 +109,7 @@ button { cursor: pointer; }
         <div class="bar-inner" id="hpBar"></div>
     </div>
 
-    <input type="number" inputmode="numeric" id="damage" placeholder="ダメージ" autofocus>
+    <input type="number" inputmode="numeric" id="damage" placeholder="ダメージ">
 
     <div class="keypad">
         <button type="button" onclick="keypadInput('1')">1</button>
@@ -200,19 +200,16 @@ function playKeySound() {
 function keypadInput(number) {
     damageInput.value += number;
     playKeySound();
-    damageInput.focus();
 }
 
 function keypadBackspace() {
     damageInput.value = damageInput.value.slice(0, -1);
     playKeySound();
-    damageInput.focus();
 }
 
 function keypadClear() {
     damageInput.value = "";
     playKeySound();
-    damageInput.focus();
 }
 
 function updateBossList() {
@@ -270,7 +267,6 @@ function applyDamage() {
 
     updateDisplay();
     updateDamageHistory();
-    damageInput.focus();
 }
 
 function applyHeal() {
@@ -285,7 +281,6 @@ function applyHeal() {
 
     updateDisplay();
     updateDamageHistory();
-    damageInput.focus();
 }
 
 function undoDamage() {
