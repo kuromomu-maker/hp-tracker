@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ボス管理 - RTA Boss HP Tracker</title>
+<style>
+* { box-sizing: border-box; }
+body {
+    font-family: Arial, sans-serif;
+    background: #222;
+    color: white;
+    width: 100%;
+    max-width: 520px;
+    padding: 10px;
+    margin: 40px auto;
+}
+h1, h2 { text-align: center; }
+.panel {
+    background: #333;
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 8px;
+}
+input, button {
+    font-size: 18px;
+    padding: 9px;
+    margin: 4px;
+}
+input { width: calc(100% - 8px); }
+button { cursor: pointer; }
+.add-button, .back-button {
+    width: calc(100% - 8px);
+}
+.boss-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: #444;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 5px;
+}
+.boss-info {
+    text-align: left;
+    min-width: 0;
+    word-break: break-word;
+}
+.boss-actions {
+    display: flex;
+    flex-shrink: 0;
+}
+.delete-button {
+    background: #b33;
+    color: white;
+    border: none;
+}
+.edit-button {
+    background: #555;
+    color: white;
+    border: none;
+}
+.small {
+    font-size: 14px;
+    color: #bbb;
+}
+.empty {
+    color: #bbb;
+    text-align: center;
+    padding: 15px 0;
+}
+</style>
+</head>
+<body>
+
+<h1>ボス管理</h1>
+
+<div class="panel">
+    <h2>ボスを追加</h2>
+
+    <input type="text" id="bossName" placeholder="ボス名">
+    <input type="number" id="bossHP" placeholder="最大HP">
+
+    <button class="add-button" onclick="addBoss()">ボスを追加</button>
+
+    <p class="small">
+        ボス名と最大HPを入力して追加してください。
+    </p>
+</div>
+
+<div class="panel">
+    <h2>登録済みボス</h2>
+    <div id="bossList"></div>
+</div>
+
+<button class="back-button" onclick="location.href='index.html'">
+    ← HP管理に戻る
+</button>
+
+<script>
+let bosses = JSON.parse(localStorage.getItem("bosses")) || {};
+
+function saveBosses() {
+    localStorage.setItem("bosses", JSON.stringify(bosses));
+}
+
+function updateManagementList() {
+    const bossList = document.getElementById("bossList");
+    bossList.innerHTML = "";
+
+    const names = Object.keys(bosses);
+
+    if (names.length === 0) {
+        bossList.innerHTML = '<div class="empty">登録されているボスはいません</div>';
+        return;
+    }
+
+    names.forEach(function(name) {
+        const item = document.createElement("div");
+        item.className = "boss-item";
+
+        const info = document.createElement("div");
+        info.className = "boss-info";
+
+        const strong = document.createElement("strong");
+        strong.textContent = name;
+
+        const br = document.createElement("br");
+        const hpText = document.createTextNode(
+            "HP " + Number(bosses[name]).toLocaleString()
+        );
+
+        info.appendChild(strong);
+        info.appendChild(br);
+        info.appendChild(hpText);
+
+        const actions = document.createElement("div");
+        actions.className = "boss-actions";
+
+        const editButton = document.createElement("button");
+        editButton.textContent = "編集";
+        editButton.className = "edit-button";
+        editButton.onclick = function() {
+            editBoss(name);
+        };
+
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "削除";
+        deleteButton.className = "delete-button";
+        deleteButton.onclick = function() {
+            deleteBoss(name);
+        };
+
+        actions.appendChild(editButton);
+        actions.appendChild(deleteButton);
+
+        item.appendChild(info);
+        item.appendChild(actions);
+
+        bossList.appendChild(item);
+    });
+}
+
+function addBoss() {
+    const nameInput = document.getElementById("bossName");
+    const hpInput = document.getElementById("bossHP");
+
+    const name = nameInput.value.trim();
+    const hp = Number(hpInput.value);
+
+    if (!name) {
+        alert("ボス名を入力してください");
+        return;
+    }
+
+    if (!hp || hp <= 0) {
+        alert("正しいHPを入力してください");
+        return;
+    }
+
+    bosses[name] = hp;
+    saveBosses();
+
+    localStorage.setItem("selectedBoss", name);
+
+    updateManagementList();
+
+    nameInput.value = "";
+    hpInput.value = "";
+    nameInput.focus();
+}
+
+function deleteBoss(name) {
+    if (!confirm("「" + name + "」を削除しますか？")) {
+        return;
+    }
+
+    delete bosses[name];
+    saveBosses();
+
+    if (localStorage.getItem("selectedBoss") === name) {
+        const remaining = Object.keys(bosses);
+        localStorage.setItem(
+            "selectedBoss",
+            remaining.length > 0 ? remaining[0] : ""
+        );
+    }
+
+    updateManagementList();
+}
+
+function editBoss(name) {
+    const newName = prompt("新しいボス名", name);
+
+    if (newName === null) return;
+
+    const trimmedName = newName.trim();
+
+    if (!trimmedName) {
+        alert("ボス名を入力してください");
+        return;
+    }
+
+    const newHP = prompt("最大HP", bosses[name]);
+
+    if (newHP === null) return;
+
+    const hp = Number(newHP);
+
+    if (!hp || hp <= 0) {
+        alert("正しいHPを入力してください");
+        return;
+    }
+
+    if (trimmedName !== name && bosses[trimmedName] !== undefined) {
+        alert("その名前のボスはすでに登録されています");
+        return;
+    }
+
+    delete bosses[name];
+    bosses[trimmedName] = hp;
+
+    saveBosses();
+
+    if (localStorage.getItem("selectedBoss") === name) {
+        localStorage.setItem("selectedBoss", trimmedName);
+    }
+
+    updateManagementList();
+}
+
+updateManagementList();
+</script>
+</body>
+</html>
