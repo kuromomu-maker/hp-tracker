@@ -3,49 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HP Tracker</title>
-
+<title>RTA Boss HP Tracker</title>
 <style>
+* { box-sizing: border-box; }
 body {
     font-family: Arial, sans-serif;
     background: #222;
     color: white;
     width: 100%;
     max-width: 520px;
-    box-sizing: border-box;
     padding: 10px;
     margin: 40px auto;
 }
-
-h1 {
-    text-align: center;
-}
-
+h1 { text-align: center; }
 select, input, button {
     font-size: 18px;
     padding: 9px;
     margin: 4px;
-    box-sizing: border-box;
 }
-
-select {
-    width: 100%;
-}
-
-input {
-    width: 230px;
-}
-
-button {
-    cursor: pointer;
-}
-
+select { width: 100%; }
+input { width: 230px; }
+button { cursor: pointer; }
 .hp {
     font-size: 32px;
     text-align: center;
     margin: 20px 0;
 }
-
 .bar {
     width: 100%;
     height: 30px;
@@ -54,959 +37,350 @@ button {
     border-radius: 5px;
     overflow: hidden;
 }
-
 .bar-inner {
     height: 100%;
     background: #4caf50;
     width: 100%;
     transition: width 0.2s;
 }
-
-.center {
-    text-align: center;
-}
-
-.panel {
+.center { text-align: center; }
+.panel, .history-panel {
     background: #333;
     padding: 15px;
     margin-top: 20px;
     border-radius: 8px;
 }
-
-.panel h2 {
-    margin-top: 0;
-}
-
-.boss-list {
-    margin-top: 15px;
-}
-
-.boss-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #444;
-    padding: 8px;
-    margin: 5px 0;
-    border-radius: 5px;
-}
-
-.boss-info {
-    text-align: left;
-}
-
-.delete-button {
-    background: #b33;
-    color: white;
-    border: none;
-    padding: 7px 10px;
-}
-
-.delete-button:hover {
-    background: #d44;
-}
-
-.edit-button {
-    background: #555;
-    color: white;
-    border: none;
-    padding: 7px 10px;
-}
-
-.small {
-    font-size: 14px;
-    color: #bbb;
-}
-
-.dead {
-    color: #ff4444;
-    font-weight: bold;
-    font-size: 24px;
-}
-.history-panel {
-    background: #333;
-    margin-top: 20px;
-    padding: 15px;
-    border-radius: 8px;
-    text-align: left;
-}
-
-.history-panel h2 {
-    margin-top: 0;
-    text-align: center;
-}
-
+.history-panel h2 { text-align: center; margin-top: 0; }
 .history-item {
     background: #444;
     padding: 7px;
     margin: 4px 0;
     border-radius: 4px;
 }
-
 #totalDamage {
     font-size: 20px;
     margin: 10px 0;
 }
-    .keypad {
+.dead {
+    color: #ff4444;
+    font-weight: bold;
+    font-size: 24px;
+}
+.keypad {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
     margin-top: 10px;
 }
-
 .keypad button {
     height: 60px;
     font-size: 28px;
     margin: 0;
 }
-
 .damage-button {
-    width: 100%;
+    width: calc(50% - 8px);
     height: 60px;
-    font-size: 24px;
+    font-size: 22px;
     margin-top: 10px;
+}
+.manage-button {
+    width: 100%;
+    margin-top: 15px;
+}
+.small {
+    font-size: 14px;
+    color: #bbb;
 }
 </style>
 </head>
-
 <body>
 
 <h1>RTA Boss HP Tracker</h1>
 
 <div class="center">
-
     <select id="bossSelect"></select>
 
     <div class="hp">
-        <span id="currentHP">0</span>
-        /
+        <span id="currentHP">0</span> /
         <span id="maxHP">0</span>
     </div>
 
     <div class="bar">
         <div class="bar-inner" id="hpBar"></div>
     </div>
-    
-<input
-    type="number"
-    inputmode="numeric"
-    id="damage"
-    placeholder="ダメージ"
->
-<div class="keypad">
 
-    <button type="button" onclick="keypadInput('1')">1</button>
-    <button type="button" onclick="keypadInput('2')">2</button>
-    <button type="button" onclick="keypadInput('3')">3</button>
+    <input type="number" inputmode="numeric" id="damage" placeholder="ダメージ" autofocus>
 
-    <button type="button" onclick="keypadInput('4')">4</button>
-    <button type="button" onclick="keypadInput('5')">5</button>
-    <button type="button" onclick="keypadInput('6')">6</button>
+    <div class="keypad">
+        <button type="button" onclick="keypadInput('1')">1</button>
+        <button type="button" onclick="keypadInput('2')">2</button>
+        <button type="button" onclick="keypadInput('3')">3</button>
+        <button type="button" onclick="keypadInput('4')">4</button>
+        <button type="button" onclick="keypadInput('5')">5</button>
+        <button type="button" onclick="keypadInput('6')">6</button>
+        <button type="button" onclick="keypadInput('7')">7</button>
+        <button type="button" onclick="keypadInput('8')">8</button>
+        <button type="button" onclick="keypadInput('9')">9</button>
+        <button type="button" onclick="keypadBackspace()">←</button>
+        <button type="button" onclick="keypadInput('0')">0</button>
+        <button type="button" onclick="keypadClear()">C</button>
+    </div>
 
-    <button type="button" onclick="keypadInput('7')">7</button>
-    <button type="button" onclick="keypadInput('8')">8</button>
-    <button type="button" onclick="keypadInput('9')">9</button>
-
-    <button type="button" onclick="keypadBackspace()">←</button>
-    <button type="button" onclick="keypadInput('0')">0</button>
-    <button type="button" onclick="keypadClear()">C</button>
-
-</div>
-
-<button
-    class="damage-button"
-    onclick="applyDamage()">
-    ダメージ適用
-</button>
-    
-<button
-    class="damage-button"
-    onclick="applyHeal()">
-    回復
-</button>
+    <button class="damage-button" onclick="applyDamage()">ダメージ適用</button>
+    <button class="damage-button" onclick="applyHeal()">回復</button>
 
     <br>
-
     <button onclick="resetHP()">リセット</button>
-<button onclick="undoDamage()">↩ Undo</button>
+    <button onclick="undoDamage()">↩ Undo</button>
 
+    <div id="status"></div>
 </div>
-        <div id="status"></div>
 
-<div id="totalDamage">
-    累計ダメージ：0
-</div>
+<div id="totalDamage">累計ダメージ：0</div>
 
 <div class="history-panel">
     <h2>ダメージ履歴</h2>
-    <div id="damageHistory">
-        まだダメージ履歴がありません
-    </div>
+    <div id="damageHistory">まだダメージ履歴がありません</div>
 </div>
-
-
 
 <div class="panel">
-
-    <h2>ボス管理</h2>
-
-    <input
-        type="text"
-        id="bossName"
-        placeholder="ボス名"
-    >
-
-    <input
-        type="number"
-        id="bossHP"
-        placeholder="最大HP"
-    >
-
-    <br>
-
-    <button onclick="addBoss()">ボスを追加</button>
-
-    <p class="small">
-        ボス名と最大HPを入力して追加してください。
-    </p>
-
-    <div class="boss-list" id="bossList"></div>
-
+    <button class="manage-button" onclick="location.href='bosses.html'">ボス管理</button>
 </div>
 
-
 <script>
-function keypadInput(number) {
-
-    document.getElementById("damage").value += number;
-
-    playKeySound();
-}
-function keypadBackspace() {
-    const input = document.getElementById("damage");
-    input.value = input.value.slice(0, -1);
-}
-
-function keypadClear() {
-    document.getElementById("damage").value = "";
-}
-let bosses =
-    JSON.parse(localStorage.getItem("bosses")) || {};
-
+let bosses = JSON.parse(localStorage.getItem("bosses")) || {};
+let selectedBoss = localStorage.getItem("selectedBoss") || "";
 
 let maxHP = 0;
 let currentHP = 0;
 let hpHistory = [];
 let damageHistory = [];
 
-const bossSelect =
-    document.getElementById("bossSelect");
+const bossSelect = document.getElementById("bossSelect");
+const damageInput = document.getElementById("damage");
+const currentHPText = document.getElementById("currentHP");
+const maxHPText = document.getElementById("maxHP");
+const hpBar = document.getElementById("hpBar");
+const status = document.getElementById("status");
 
-const damageInput =
-    document.getElementById("damage");
-
-const currentHPText =
-    document.getElementById("currentHP");
-
-const maxHPText =
-    document.getElementById("maxHP");
-
-const hpBar =
-    document.getElementById("hpBar");
-
-const status =
-    document.getElementById("status");
-
-const bossList =
-    document.getElementById("bossList");
-let audioContext;
+let audioContext = null;
 
 function playKeySound() {
+    try {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
 
-    if (!audioContext) {
-        audioContext =
-            new (window.AudioContext ||
-            window.webkitAudioContext)();
+        if (audioContext.state === "suspended") {
+            audioContext.resume();
+        }
+
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        oscillator.type = "square";
+        oscillator.frequency.setValueAtTime(700, audioContext.currentTime);
+
+        gain.gain.setValueAtTime(0.08, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(
+            0.001,
+            audioContext.currentTime + 0.05
+        );
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.05);
+    } catch (e) {
+        console.warn("音声を再生できませんでした:", e);
     }
-
-    const oscillator =
-        audioContext.createOscillator();
-
-    const gain =
-        audioContext.createGain();
-
-    oscillator.frequency.value = 700;
-    oscillator.type = "square";
-
-    gain.gain.setValueAtTime(
-        0.08,
-        audioContext.currentTime
-    );
-
-    gain.gain.exponentialRampToValueAtTime(
-        0.001,
-        audioContext.currentTime + 0.05
-    );
-
-    oscillator.connect(gain);
-    gain.connect(audioContext.destination);
-
-    oscillator.start();
-    oscillator.stop(
-        audioContext.currentTime + 0.05
-    );
 }
-function keypadBackspace() {
 
-    const input =
-        document.getElementById("damage");
-
-    input.value =
-        input.value.slice(0, -1);
-
+function keypadInput(number) {
+    damageInput.value += number;
     playKeySound();
+    damageInput.focus();
+}
+
+function keypadBackspace() {
+    damageInput.value = damageInput.value.slice(0, -1);
+    playKeySound();
+    damageInput.focus();
 }
 
 function keypadClear() {
-
-    document.getElementById("damage").value = "";
-
+    damageInput.value = "";
     playKeySound();
+    damageInput.focus();
 }
-/* -------------------------
-   データ保存
-------------------------- */
-
-function saveBosses() {
-
-    localStorage.setItem(
-        "bosses",
-        JSON.stringify(bosses)
-    );
-
-}
-
-
-/* -------------------------
-   ボス選択欄
-------------------------- */
 
 function updateBossList() {
-
     bossSelect.innerHTML = "";
 
     for (const name in bosses) {
-
-        const option =
-            document.createElement("option");
-
+        const option = document.createElement("option");
         option.value = name;
-
-        option.textContent =
-            name +
-            "（HP " +
-            bosses[name].toLocaleString() +
-            "）";
-
+        option.textContent = name + "（HP " + Number(bosses[name]).toLocaleString() + "）";
         bossSelect.appendChild(option);
-
     }
 
-    updateManagementList();
-
-}
-
-
-/* -------------------------
-   管理画面の一覧
-------------------------- */
-
-function updateManagementList() {
-
-    bossList.innerHTML = "";
-
-    for (const name in bosses) {
-
-        const item =
-            document.createElement("div");
-
-        item.className = "boss-item";
-
-
-        const info =
-            document.createElement("div");
-
-        info.className = "boss-info";
-
-        info.innerHTML =
-            "<strong>" +
-            escapeHTML(name) +
-            "</strong><br>" +
-            "HP " +
-            bosses[name].toLocaleString();
-
-
-        const buttons =
-            document.createElement("div");
-
-
-        const editButton =
-            document.createElement("button");
-
-        editButton.textContent = "編集";
-
-        editButton.className =
-            "edit-button";
-
-        editButton.onclick =
-            function() {
-
-                editBoss(name);
-
-            };
-
-
-        const deleteButton =
-            document.createElement("button");
-
-        deleteButton.textContent = "削除";
-
-        deleteButton.className =
-            "delete-button";
-
-        deleteButton.onclick =
-            function() {
-
-                deleteBoss(name);
-
-            };
-
-
-        buttons.appendChild(editButton);
-        buttons.appendChild(deleteButton);
-
-
-        item.appendChild(info);
-        item.appendChild(buttons);
-
-        bossList.appendChild(item);
-
+    if (selectedBoss && bosses[selectedBoss]) {
+        bossSelect.value = selectedBoss;
+    } else if (bossSelect.options.length > 0) {
+        selectedBoss = bossSelect.options[0].value;
+        bossSelect.value = selectedBoss;
     }
-
 }
-
-
-/* -------------------------
-   ボス選択
-------------------------- */
 
 function selectBoss() {
+    const name = bossSelect.value;
+    selectedBoss = name;
+    localStorage.setItem("selectedBoss", name);
 
-    const name =
-        bossSelect.value;
-
-    // ボス変更時に履歴をリセット
     hpHistory = [];
     damageHistory = [];
 
     if (!name || !bosses[name]) {
-
         maxHP = 0;
         currentHP = 0;
-
         updateDisplay();
         updateDamageHistory();
-
         return;
     }
 
-    maxHP =
-        Number(bosses[name]);
-
-    currentHP =
-        maxHP;
+    maxHP = Number(bosses[name]);
+    currentHP = maxHP;
 
     updateDisplay();
     updateDamageHistory();
-
 }
 
-bossSelect.addEventListener(
-    "change",
-    selectBoss
-);
-
-
-/* -------------------------
-   ダメージ
-------------------------- */
+bossSelect.addEventListener("change", selectBoss);
 
 function applyDamage() {
+    const damage = Number(damageInput.value);
+    if (!damage || damage <= 0 || maxHP <= 0) return;
 
-    const damage =
-        Number(damageInput.value);
-
-    if (!damage || damage <= 0) {
-        return;
-    }
-
-    // Undo用に現在HPを保存
     hpHistory.push(currentHP);
+    damageHistory.push({ type: "damage", value: damage });
 
-    // ダメージ履歴に追加
-    damageHistory.push({
-        type: "damage",
-        value: damage
-    });
-
-    currentHP -= damage;
-
-    if (currentHP < 0) {
-        currentHP = 0;
-    }
-
-    // 入力欄をクリア
+    currentHP = Math.max(0, currentHP - damage);
     damageInput.value = "";
 
     updateDisplay();
     updateDamageHistory();
+    damageInput.focus();
 }
-
 
 function applyHeal() {
+    const heal = Number(damageInput.value);
+    if (!heal || heal <= 0 || maxHP <= 0) return;
 
-    const heal =
-        Number(damageInput.value);
-
-    if (!heal || heal <= 0) {
-        return;
-    }
-
-    // Undo用に現在HPを保存
     hpHistory.push(currentHP);
+    damageHistory.push({ type: "heal", value: heal });
 
-    // 回復履歴に追加
-    damageHistory.push({
-        type: "heal",
-        value: heal
-    });
-
-    currentHP += heal;
-
-    // 最大HPを超えない
-    if (currentHP > maxHP) {
-        currentHP = maxHP;
-    }
-
-    // 入力欄をクリア
+    currentHP = Math.min(maxHP, currentHP + heal);
     damageInput.value = "";
 
     updateDisplay();
     updateDamageHistory();
+    damageInput.focus();
 }
 
-
 function undoDamage() {
+    if (hpHistory.length === 0) return;
 
-    if (hpHistory.length === 0) {
-        return;
-    }
-
-    currentHP =
-        hpHistory.pop();
-
-    // 最新の履歴を削除
+    currentHP = hpHistory.pop();
     damageHistory.pop();
 
     updateDisplay();
     updateDamageHistory();
+    damageInput.focus();
 }
 
-
-damageInput.addEventListener(
-    "keydown",
-    function(event) {
-
-        if (event.key === "Enter") {
-
-            applyDamage();
-
-        }
-
-    }
-);
-
-document.addEventListener("keydown", function(event) {
-
-    if (event.key === "ArrowLeft") {
-
-        undoDamage();
-
-    }
-
-});
-
-
-/* -------------------------
-   リセット
-------------------------- */
-
 function resetHP() {
+    if (maxHP <= 0) return;
 
     currentHP = maxHP;
-
     hpHistory = [];
     damageHistory = [];
 
     updateDisplay();
     updateDamageHistory();
-
+    damageInput.focus();
 }
 
-/* -------------------------
-   表示更新
-------------------------- */
-
 function updateDisplay() {
+    currentHPText.textContent = currentHP.toLocaleString();
+    maxHPText.textContent = maxHP.toLocaleString();
 
-    currentHPText.textContent =
-        currentHP.toLocaleString();
-
-    maxHPText.textContent =
-        maxHP.toLocaleString();
-
-
-    let percent = 0;
-
-    if (maxHP > 0) {
-
-        percent =
-            (currentHP / maxHP) * 100;
-
-    }
-
-
-    hpBar.style.width =
-        percent + "%";
-
+    const percent = maxHP > 0 ? (currentHP / maxHP) * 100 : 0;
+    hpBar.style.width = percent + "%";
 
     if (currentHP <= 0 && maxHP > 0) {
-
-        status.innerHTML =
-            '<span class="dead">DEAD!</span>';
-
+        status.innerHTML = '<span class="dead">DEAD!</span>';
     } else if (maxHP > 0) {
-
-        status.textContent =
-            "残り " +
-            percent.toFixed(2) +
-            "%";
-
+        status.textContent = "残り " + percent.toFixed(2) + "%";
     } else {
-
-        status.textContent =
-            "ボスを追加してください";
-
+        status.textContent = "ボスを追加してください";
     }
-
 }
 
 function updateDamageHistory() {
+    const history = document.getElementById("damageHistory");
 
-    const history =
-        document.getElementById("damageHistory");
+    const totalDamage = damageHistory.reduce((sum, item) => {
+        return item.type === "damage" ? sum + item.value : sum;
+    }, 0);
 
-
-    // ダメージだけを累計
-    const totalDamage =
-        damageHistory.reduce(
-            (sum, item) => {
-
-                if (item.type === "damage") {
-                    return sum + item.value;
-                }
-
-                return sum;
-
-            },
-            0
-        );
-
-
-    document.getElementById("totalDamage")
-        .textContent =
-        "累計ダメージ：" +
-        totalDamage.toLocaleString();
-
+    document.getElementById("totalDamage").textContent =
+        "累計ダメージ：" + totalDamage.toLocaleString();
 
     if (damageHistory.length === 0) {
-
-        history.innerHTML =
-            "まだダメージ履歴がありません";
-
+        history.innerHTML = "まだダメージ履歴がありません";
         return;
-
     }
-
 
     history.innerHTML = "";
 
+    [...damageHistory].reverse().forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "history-item";
 
-    // 新しいものから表示
-    [...damageHistory]
-        .reverse()
-        .forEach((item, index) => {
+        if (item.type === "damage") {
+            div.textContent = (index + 1) + ".  -" + item.value.toLocaleString();
+        } else {
+            div.textContent = (index + 1) + ".  +" + item.value.toLocaleString() + " 回復";
+        }
 
-            const div =
-                document.createElement("div");
-
-            div.className =
-                "history-item";
-
-
-            if (item.type === "damage") {
-
-                div.textContent =
-                    (index + 1) +
-                    ".  -" +
-                    item.value.toLocaleString();
-
-            } else {
-
-                div.textContent =
-                    (index + 1) +
-                    ".  +" +
-                    item.value.toLocaleString() +
-                    " 回復";
-
-            }
-
-
-            history.appendChild(div);
-
-        });
-
-}
-/* -------------------------
-   ボス追加
-------------------------- */
-
-function addBoss() {
-
-    const name =
-        document
-        .getElementById("bossName")
-        .value
-        .trim();
-
-
-    const hp =
-        Number(
-            document
-            .getElementById("bossHP")
-            .value
-        );
-
-
-    if (!name) {
-
-        alert("ボス名を入力してください");
-
-        return;
-
-    }
-
-
-    if (!hp || hp <= 0) {
-
-        alert("正しいHPを入力してください");
-
-        return;
-
-    }
-
-
-    bosses[name] = hp;
-
-    saveBosses();
-
-    updateBossList();
-
-
-    bossSelect.value =
-        name;
-
-    selectBoss();
-
-
-    document
-        .getElementById("bossName")
-        .value = "";
-
-    document
-        .getElementById("bossHP")
-        .value = "";
-
+        history.appendChild(div);
+    });
 }
 
-
-/* -------------------------
-   ボス削除
-------------------------- */
-
-function deleteBoss(name) {
-
-    const result =
-        confirm(
-            "「" +
-            name +
-            "」を削除しますか？"
-        );
-
-
-    if (!result) {
-        return;
+damageInput.addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        applyDamage();
     }
+});
 
+document.addEventListener("keydown", function(event) {
+    if (event.target === damageInput) return;
 
-    delete bosses[name];
-
-    saveBosses();
-
-
-    updateBossList();
-
-
-    if (bossSelect.options.length > 0) {
-
-        bossSelect.selectedIndex = 0;
-
-        selectBoss();
-
-    } else {
-
-        maxHP = 0;
-        currentHP = 0;
-
-        updateDisplay();
-
+    if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        undoDamage();
     }
-
-}
-
-
-/* -------------------------
-   ボス編集
-------------------------- */
-
-function editBoss(name) {
-
-    const newName =
-        prompt(
-            "新しいボス名",
-            name
-        );
-
-
-    if (newName === null) {
-        return;
-    }
-
-
-    const trimmedName =
-        newName.trim();
-
-
-    if (!trimmedName) {
-
-        alert("ボス名を入力してください");
-
-        return;
-
-    }
-
-
-    const newHP =
-        prompt(
-            "最大HP",
-            bosses[name]
-        );
-
-
-    if (newHP === null) {
-        return;
-    }
-
-
-    const hp =
-        Number(newHP);
-
-
-    if (!hp || hp <= 0) {
-
-        alert("正しいHPを入力してください");
-
-        return;
-
-    }
-
-
-    delete bosses[name];
-
-    bosses[trimmedName] =
-        hp;
-
-
-    saveBosses();
-
-    updateBossList();
-
-
-    bossSelect.value =
-        trimmedName;
-
-    selectBoss();
-
-}
-
-
-/* -------------------------
-   HTMLエスケープ
-------------------------- */
-
-function escapeHTML(text) {
-
-    const div =
-        document.createElement("div");
-
-    div.textContent =
-        text;
-
-    return div.innerHTML;
-
-}
-
-
-/* -------------------------
-   初期化
-------------------------- */
+});
 
 updateBossList();
 
 if (bossSelect.options.length > 0) {
-
-    bossSelect.selectedIndex = 0;
-
     selectBoss();
-
 } else {
-
     updateDisplay();
-
 }
-
 </script>
-
 </body>
 </html>
-```
