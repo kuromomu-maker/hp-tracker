@@ -91,6 +91,27 @@ button { cursor: pointer; }
     font-size: 14px;
     color: #bbb;
 }
+/* ダメージ適用 */
+.damage-button {
+    background: #d96b6b;
+    color: white;
+    border: none;
+}
+
+/* 回復 */
+.heal-button {
+    background: #6bbf7b;
+    color: white;
+    border: none;
+}
+
+/* C・←ボタン */
+.keypad .clear-button,
+.keypad .back-button {
+    background: #5f5f5f;
+    color: white;
+    border: none;
+}
 </style>
 </head>
 <body>
@@ -121,13 +142,13 @@ button { cursor: pointer; }
         <button type="button" onclick="keypadInput('7')">7</button>
         <button type="button" onclick="keypadInput('8')">8</button>
         <button type="button" onclick="keypadInput('9')">9</button>
-        <button type="button" onclick="keypadBackspace()">←</button>
+        <button type="button" class="back-button" onclick="keypadBackspace()">←</button>
         <button type="button" onclick="keypadInput('0')">0</button>
-        <button type="button" onclick="keypadClear()">C</button>
+        <button type="button" class="clear-button" onclick="keypadClear()">C</button>
     </div>
 
     <button class="damage-button" onclick="applyDamage()">ダメージ適用</button>
-    <button class="damage-button" onclick="applyHeal()">回復</button>
+    <button class="heal-button" onclick="applyHeal()">回復</button>
 
     <br>
     <button onclick="resetHP()">リセット</button>
