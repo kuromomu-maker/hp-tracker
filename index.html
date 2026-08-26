@@ -112,6 +112,20 @@ button { cursor: pointer; }
     color: white;
     border: none;
 }
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+    touch-action: manipulation;
+}
+
+.keypad button {
+    height: 60px;
+    font-size: 28px;
+    margin: 0;
+    touch-action: manipulation;
+}
 </style>
 </head>
 <body>
