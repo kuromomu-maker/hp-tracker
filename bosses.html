@@ -1,11 +1,16 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ボス管理 - RTA Boss HP Tracker</title>
+
 <style>
-* { box-sizing: border-box; }
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: Arial, sans-serif;
     background: #222;
@@ -15,242 +20,1065 @@ body {
     padding: 10px;
     margin: 40px auto;
 }
-h1, h2 { text-align: center; }
+
+h1, h2 {
+    text-align: center;
+}
+
 .panel {
     background: #333;
     padding: 15px;
     margin-top: 20px;
     border-radius: 8px;
 }
+
 input, button {
     font-size: 18px;
     padding: 9px;
     margin: 4px;
 }
-input { width: calc(100% - 8px); }
-button { cursor: pointer; }
-.add-button, .back-button {
+
+input {
     width: calc(100% - 8px);
 }
+
+button {
+    cursor: pointer;
+}
+
+.add-button,
+.back-button {
+    width: calc(100% - 8px);
+}
+
+.boss-list {
+    margin-top: 15px;
+}
+
+/* -------------------------
+   ボス一覧
+------------------------- */
+
 .boss-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+
     background: #444;
     padding: 8px;
     margin: 5px 0;
+
     border-radius: 5px;
+
+    /* ドラッグできることを分かりやすくする */
+    cursor: grab;
+
+    /* スマホで文字選択されるのを防ぐ */
+    user-select: none;
+    -webkit-user-select: none;
+
+    /* ドラッグ中のアニメーション */
+    transition: opacity 0.15s, transform 0.15s;
 }
+
+/* ドラッグ中 */
+.boss-item.dragging {
+    opacity: 0.45;
+}
+
+/* ドロップ先 */
+.boss-item.drag-over {
+    border-top: 3px solid #fff;
+}
+
+/* ドラッグ用の部分 */
+.drag-handle {
+    font-size: 24px;
+    color: #aaa;
+    padding: 4px 8px;
+    flex-shrink: 0;
+    cursor: grab;
+}
+
 .boss-info {
     text-align: left;
     min-width: 0;
+    flex: 1;
     word-break: break-word;
 }
+
 .boss-actions {
     display: flex;
+    align-items: center;
     flex-shrink: 0;
 }
-.delete-button {
-    background: #b33;
+
+.order-buttons {
+    display: flex;
+    flex-direction: column;
+}
+
+.order-button {
+    background: #555;
     color: white;
     border: none;
+    padding: 3px 9px;
+    margin: 1px;
+    font-size: 16px;
 }
+
+/* 編集 */
 .edit-button {
     background: #555;
     color: white;
     border: none;
 }
+
+/* 削除 */
+.delete-button {
+    background: #b33;
+    color: white;
+    border: none;
+}
+
+.delete-button:hover {
+    background: #d44;
+}
+
 .small {
     font-size: 14px;
     color: #bbb;
 }
+
 .empty {
     color: #bbb;
     text-align: center;
     padding: 15px 0;
 }
+
+/* スマホでは少しコンパクトに */
+@media (max-width: 480px) {
+
+    .boss-item {
+        gap: 4px;
+        padding: 6px;
+    }
+
+    .drag-handle {
+        font-size: 20px;
+        padding: 4px;
+    }
+
+    .boss-actions button {
+        font-size: 16px;
+        padding: 7px;
+        margin: 2px;
+    }
+
+    .order-button {
+        font-size: 15px;
+        padding: 2px 7px;
+    }
+}
 </style>
+
 </head>
+
 <body>
 
 <h1>ボス管理</h1>
 
 <div class="panel">
-    <h2>ボスを追加</h2>
 
-    <input type="text" id="bossName" placeholder="ボス名">
-    <input type="number" id="bossHP" placeholder="最大HP">
+```
+<h2>ボスを追加</h2>
 
-    <button class="add-button" onclick="addBoss()">ボスを追加</button>
+<input
+    type="text"
+    id="bossName"
+    placeholder="ボス名"
+>
 
-    <p class="small">
-        ボス名と最大HPを入力して追加してください。
-    </p>
+<input
+    type="number"
+    id="bossHP"
+    placeholder="最大HP"
+>
+
+<button
+    class="add-button"
+    onclick="addBoss()"
+>
+    ボスを追加
+</button>
+
+<p class="small">
+    ボス名と最大HPを入力して追加してください。
+</p>
+```
+
 </div>
 
 <div class="panel">
-    <h2>登録済みボス</h2>
-    <div id="bossList"></div>
+
+```
+<h2>登録済みボス</h2>
+
+<p class="small">
+    「☰」をドラッグしてボスの順番を変更できます。
+</p>
+
+<div id="bossList"></div>
+```
+
 </div>
 
-<button class="back-button" onclick="location.href='index.html'">
-    ← HP管理に戻る
+<button
+class="back-button"
+onclick="location.href='index.html'"
+
+>
+
+```
+← HP管理に戻る
+```
+
 </button>
 
 <script>
-let bosses = JSON.parse(localStorage.getItem("bosses")) || {};
+
+/* -------------------------
+   ボスデータ
+------------------------- */
+
+let bosses =
+    JSON.parse(localStorage.getItem("bosses")) || {};
+
+
+/* -------------------------
+   ドラッグ中のボス
+------------------------- */
+
+let draggedBoss = null;
+
+
+/* -------------------------
+   ボスデータ保存
+------------------------- */
 
 function saveBosses() {
-    localStorage.setItem("bosses", JSON.stringify(bosses));
+
+    localStorage.setItem(
+        "bosses",
+        JSON.stringify(bosses)
+    );
+
 }
 
+
+/* -------------------------
+   ボス一覧更新
+------------------------- */
+
 function updateManagementList() {
-    const bossList = document.getElementById("bossList");
+
+    const bossList =
+        document.getElementById("bossList");
+
     bossList.innerHTML = "";
 
-    const names = Object.keys(bosses);
+    const names =
+        Object.keys(bosses);
+
+
+    /* ボスがいない場合 */
 
     if (names.length === 0) {
-        bossList.innerHTML = '<div class="empty">登録されているボスはいません</div>';
+
+        bossList.innerHTML =
+            '<div class="empty">登録されているボスはいません</div>';
+
         return;
     }
 
-    names.forEach(function(name) {
-        const item = document.createElement("div");
+
+    names.forEach(function(name, index) {
+
+        /* -------------------------
+           ボス1個分
+        ------------------------- */
+
+        const item =
+            document.createElement("div");
+
         item.className = "boss-item";
 
-        const info = document.createElement("div");
-        info.className = "boss-info";
+        item.draggable = true;
 
-        const strong = document.createElement("strong");
-        strong.textContent = name;
+        item.dataset.name = name;
 
-        const br = document.createElement("br");
-        const hpText = document.createTextNode(
-            "HP " + Number(bosses[name]).toLocaleString()
-        );
+
+        /* -------------------------
+           ドラッグハンドル
+        ------------------------- */
+
+        const handle =
+            document.createElement("div");
+
+        handle.className =
+            "drag-handle";
+
+        handle.textContent = "☰";
+
+        handle.title =
+            "ドラッグして並び替え";
+
+
+        /* -------------------------
+           ボス情報
+        ------------------------- */
+
+        const info =
+            document.createElement("div");
+
+        info.className =
+            "boss-info";
+
+
+        const strong =
+            document.createElement("strong");
+
+        strong.textContent =
+            name;
+
+
+        const br =
+            document.createElement("br");
+
+
+        const hpText =
+            document.createTextNode(
+                "HP " +
+                Number(bosses[name]).toLocaleString()
+            );
+
 
         info.appendChild(strong);
         info.appendChild(br);
         info.appendChild(hpText);
 
-        const actions = document.createElement("div");
-        actions.className = "boss-actions";
 
-        const editButton = document.createElement("button");
-        editButton.textContent = "編集";
-        editButton.className = "edit-button";
-        editButton.onclick = function() {
-            editBoss(name);
-        };
+        /* -------------------------
+           操作ボタン
+        ------------------------- */
 
-        const deleteButton = document.createElement("button");
-        deleteButton.textContent = "削除";
-        deleteButton.className = "delete-button";
-        deleteButton.onclick = function() {
-            deleteBoss(name);
-        };
+        const actions =
+            document.createElement("div");
 
+        actions.className =
+            "boss-actions";
+
+
+        /* ↑↓ */
+
+        const orderButtons =
+            document.createElement("div");
+
+        orderButtons.className =
+            "order-buttons";
+
+
+        const upButton =
+            document.createElement("button");
+
+        upButton.textContent = "↑";
+
+        upButton.className =
+            "order-button";
+
+        upButton.title =
+            "上へ移動";
+
+        upButton.onclick =
+            function(event) {
+
+                event.stopPropagation();
+
+                moveBoss(name, -1);
+
+            };
+
+
+        const downButton =
+            document.createElement("button");
+
+        downButton.textContent = "↓";
+
+        downButton.className =
+            "order-button";
+
+        downButton.title =
+            "下へ移動";
+
+        downButton.onclick =
+            function(event) {
+
+                event.stopPropagation();
+
+                moveBoss(name, 1);
+
+            };
+
+
+        orderButtons.appendChild(upButton);
+        orderButtons.appendChild(downButton);
+
+
+        /* 編集 */
+
+        const editButton =
+            document.createElement("button");
+
+        editButton.textContent =
+            "編集";
+
+        editButton.className =
+            "edit-button";
+
+        editButton.onclick =
+            function(event) {
+
+                event.stopPropagation();
+
+                editBoss(name);
+
+            };
+
+
+        /* 削除 */
+
+        const deleteButton =
+            document.createElement("button");
+
+        deleteButton.textContent =
+            "削除";
+
+        deleteButton.className =
+            "delete-button";
+
+        deleteButton.onclick =
+            function(event) {
+
+                event.stopPropagation();
+
+                deleteBoss(name);
+
+            };
+
+
+        actions.appendChild(orderButtons);
         actions.appendChild(editButton);
         actions.appendChild(deleteButton);
 
+
+        /* -------------------------
+           組み立て
+        ------------------------- */
+
+        item.appendChild(handle);
         item.appendChild(info);
         item.appendChild(actions);
 
         bossList.appendChild(item);
+
+
+        /* -------------------------
+           ドラッグ開始
+        ------------------------- */
+
+        item.addEventListener(
+            "dragstart",
+            function(event) {
+
+                draggedBoss = name;
+
+                item.classList.add("dragging");
+
+                event.dataTransfer.effectAllowed =
+                    "move";
+
+                event.dataTransfer.setData(
+                    "text/plain",
+                    name
+                );
+
+            }
+        );
+
+
+        /* -------------------------
+           ドラッグ終了
+        ------------------------- */
+
+        item.addEventListener(
+            "dragend",
+            function() {
+
+                item.classList.remove(
+                    "dragging"
+                );
+
+                document
+                    .querySelectorAll(".boss-item")
+                    .forEach(function(el) {
+
+                        el.classList.remove(
+                            "drag-over"
+                        );
+
+                    });
+
+                draggedBoss = null;
+
+            }
+        );
+
+
+        /* -------------------------
+           ドラッグ中
+        ------------------------- */
+
+        item.addEventListener(
+            "dragover",
+            function(event) {
+
+                event.preventDefault();
+
+                if (
+                    draggedBoss &&
+                    draggedBoss !== name
+                ) {
+
+                    item.classList.add(
+                        "drag-over"
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* -------------------------
+           ドラッグが離れた
+        ------------------------- */
+
+        item.addEventListener(
+            "dragleave",
+            function() {
+
+                item.classList.remove(
+                    "drag-over"
+                );
+
+            }
+        );
+
+
+        /* -------------------------
+           ドロップ
+        ------------------------- */
+
+        item.addEventListener(
+            "drop",
+            function(event) {
+
+                event.preventDefault();
+
+                item.classList.remove(
+                    "drag-over"
+                );
+
+
+                const fromName =
+                    draggedBoss;
+
+                const toName =
+                    name;
+
+
+                if (
+                    !fromName ||
+                    fromName === toName
+                ) {
+
+                    return;
+
+                }
+
+
+                reorderBosses(
+                    fromName,
+                    toName
+                );
+
+            }
+        );
+
     });
+
 }
 
-function addBoss() {
-    const nameInput = document.getElementById("bossName");
-    const hpInput = document.getElementById("bossHP");
 
-    const name = nameInput.value.trim();
-    const hp = Number(hpInput.value);
+/* -------------------------
+   ドラッグで並び替え
+------------------------- */
 
-    if (!name) {
-        alert("ボス名を入力してください");
+function reorderBosses(
+    fromName,
+    toName
+) {
+
+    const names =
+        Object.keys(bosses);
+
+
+    const fromIndex =
+        names.indexOf(fromName);
+
+    const toIndex =
+        names.indexOf(toName);
+
+
+    if (
+        fromIndex === -1 ||
+        toIndex === -1
+    ) {
+
         return;
+
     }
 
-    if (!hp || hp <= 0) {
-        alert("正しいHPを入力してください");
-        return;
-    }
 
-    bosses[name] = hp;
+    /* 元の位置から削除 */
+
+    names.splice(
+        fromIndex,
+        1
+    );
+
+
+    /* ドロップ先の位置に入れる */
+
+    const newToIndex =
+        names.indexOf(toName);
+
+    names.splice(
+        newToIndex,
+        0,
+        fromName
+    );
+
+
+    /* 新しい順番でオブジェクトを作る */
+
+    const reorderedBosses = {};
+
+    names.forEach(function(name) {
+
+        reorderedBosses[name] =
+            bosses[name];
+
+    });
+
+
+    bosses =
+        reorderedBosses;
+
+
+    /* 保存 */
+
     saveBosses();
 
-    localStorage.setItem("selectedBoss", name);
+
+    /* 表示更新 */
 
     updateManagementList();
+
+}
+
+
+/* -------------------------
+   ↑↓で並び替え
+------------------------- */
+
+function moveBoss(
+    name,
+    direction
+) {
+
+    const names =
+        Object.keys(bosses);
+
+
+    const index =
+        names.indexOf(name);
+
+
+    if (index === -1) {
+        return;
+    }
+
+
+    const newIndex =
+        index + direction;
+
+
+    /* 範囲外 */
+
+    if (
+        newIndex < 0 ||
+        newIndex >= names.length
+    ) {
+
+        return;
+
+    }
+
+
+    /* 入れ替え */
+
+    const temp =
+        names[index];
+
+    names[index] =
+        names[newIndex];
+
+    names[newIndex] =
+        temp;
+
+
+    /* 新しい順番で作り直す */
+
+    const reorderedBosses = {};
+
+    names.forEach(function(name) {
+
+        reorderedBosses[name] =
+            bosses[name];
+
+    });
+
+
+    bosses =
+        reorderedBosses;
+
+
+    saveBosses();
+
+    updateManagementList();
+
+}
+
+
+/* -------------------------
+   ボス追加
+------------------------- */
+
+function addBoss() {
+
+    const nameInput =
+        document.getElementById(
+            "bossName"
+        );
+
+    const hpInput =
+        document.getElementById(
+            "bossHP"
+        );
+
+
+    const name =
+        nameInput.value.trim();
+
+    const hp =
+        Number(hpInput.value);
+
+
+    if (!name) {
+
+        alert(
+            "ボス名を入力してください"
+        );
+
+        return;
+
+    }
+
+
+    if (!hp || hp <= 0) {
+
+        alert(
+            "正しいHPを入力してください"
+        );
+
+        return;
+
+    }
+
+
+    /* 同名チェック */
+
+    if (
+        bosses[name] !== undefined
+    ) {
+
+        alert(
+            "その名前のボスはすでに登録されています"
+        );
+
+        return;
+
+    }
+
+
+    /*
+       オブジェクトの最後に追加
+       → 一覧でも最後に追加される
+    */
+
+    bosses[name] = hp;
+
+
+    saveBosses();
+
+
+    /*
+       追加したボスを
+       次に開いたときの選択対象にする
+    */
+
+    localStorage.setItem(
+        "selectedBoss",
+        name
+    );
+
+
+    updateManagementList();
+
 
     nameInput.value = "";
     hpInput.value = "";
+
     nameInput.focus();
+
 }
+
+
+/* -------------------------
+   ボス削除
+------------------------- */
 
 function deleteBoss(name) {
-    if (!confirm("「" + name + "」を削除しますか？")) {
+
+    if (
+        !confirm(
+            "「" +
+            name +
+            "」を削除しますか？"
+        )
+    ) {
+
         return;
+
     }
 
+
     delete bosses[name];
+
+
     saveBosses();
 
-    if (localStorage.getItem("selectedBoss") === name) {
-        const remaining = Object.keys(bosses);
+
+    /*
+       現在選択中のボスを削除した場合
+       → 残っている最初のボスを選択
+    */
+
+    if (
+        localStorage.getItem(
+            "selectedBoss"
+        ) === name
+    ) {
+
+        const remaining =
+            Object.keys(bosses);
+
+
         localStorage.setItem(
             "selectedBoss",
-            remaining.length > 0 ? remaining[0] : ""
+            remaining.length > 0
+                ? remaining[0]
+                : ""
         );
+
     }
+
 
     updateManagementList();
+
 }
 
+
+/* -------------------------
+   ボス編集
+------------------------- */
+
 function editBoss(name) {
-    const newName = prompt("新しいボス名", name);
 
-    if (newName === null) return;
+    const newName =
+        prompt(
+            "新しいボス名",
+            name
+        );
 
-    const trimmedName = newName.trim();
+
+    if (newName === null) {
+        return;
+    }
+
+
+    const trimmedName =
+        newName.trim();
+
 
     if (!trimmedName) {
-        alert("ボス名を入力してください");
+
+        alert(
+            "ボス名を入力してください"
+        );
+
+        return;
+
+    }
+
+
+    const newHP =
+        prompt(
+            "最大HP",
+            bosses[name]
+        );
+
+
+    if (newHP === null) {
         return;
     }
 
-    const newHP = prompt("最大HP", bosses[name]);
 
-    if (newHP === null) return;
+    const hp =
+        Number(newHP);
 
-    const hp = Number(newHP);
 
     if (!hp || hp <= 0) {
-        alert("正しいHPを入力してください");
+
+        alert(
+            "正しいHPを入力してください"
+        );
+
         return;
+
     }
 
-    if (trimmedName !== name && bosses[trimmedName] !== undefined) {
-        alert("その名前のボスはすでに登録されています");
+
+    /*
+       名前変更先が既に存在する場合
+    */
+
+    if (
+        trimmedName !== name &&
+        bosses[trimmedName] !== undefined
+    ) {
+
+        alert(
+            "その名前のボスはすでに登録されています"
+        );
+
         return;
+
     }
 
-    delete bosses[name];
-    bosses[trimmedName] = hp;
+
+    /*
+       重要：
+       delete → 再追加すると
+       順番が最後に移動してしまうので、
+
+       元の順番を維持したまま
+       新しいオブジェクトを作る
+    */
+
+    const names =
+        Object.keys(bosses);
+
+
+    const newBosses = {};
+
+
+    names.forEach(function(bossName) {
+
+        if (bossName === name) {
+
+            newBosses[trimmedName] =
+                hp;
+
+        } else {
+
+            newBosses[bossName] =
+                bosses[bossName];
+
+        }
+
+    });
+
+
+    bosses =
+        newBosses;
+
 
     saveBosses();
 
-    if (localStorage.getItem("selectedBoss") === name) {
-        localStorage.setItem("selectedBoss", trimmedName);
+
+    /*
+       選択中ボスの名前も変更
+    */
+
+    if (
+        localStorage.getItem(
+            "selectedBoss"
+        ) === name
+    ) {
+
+        localStorage.setItem(
+            "selectedBoss",
+            trimmedName
+        );
+
     }
 
+
     updateManagementList();
+
 }
 
+
+/* -------------------------
+   初期表示
+------------------------- */
+
 updateManagementList();
+
 </script>
+
 </body>
 </html>
