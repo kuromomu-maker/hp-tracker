@@ -329,7 +329,10 @@ function undoDamage() {
 }
 
 function resetHP() {
-    if (maxHP <= 0) return;
+
+    if (!confirm("HPをリセットしますか？")) {
+        return;
+    }
 
     currentHP = maxHP;
     hpHistory = [];
