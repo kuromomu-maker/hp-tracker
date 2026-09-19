@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RTA Boss HP Tracker</title>
 <style>
-* { box-sizing: border-box; }
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    touch-action: manipulation;
+}
 body {
     font-family: Arial, sans-serif;
     background: #222;
@@ -150,9 +156,46 @@ button { cursor: pointer; }
     padding: 8px 20px;
 }
 
+
+.zoom-controls {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(34, 34, 34, 0.95);
+    padding: 4px;
+    border-radius: 6px;
+}
+
+.zoom-controls button {
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    margin: 0;
+    font-size: 24px;
+    line-height: 1;
+}
+
+#zoomText {
+    min-width: 56px;
+    text-align: center;
+    font-size: 16px;
+}
+
 </style>
 </head>
 <body>
+
+<div class="zoom-controls">
+    <button type="button" onclick="changeZoom(-0.1)">−</button>
+    <span id="zoomText">100%</span>
+    <button type="button" onclick="changeZoom(0.1)">＋</button>
+</div>
+
+<div id="app">
 
 <h1>RTA Boss HP Tracker</h1>
 
@@ -209,6 +252,8 @@ button { cursor: pointer; }
 
 <div class="panel">
     <button class="manage-button" onclick="location.href='bosses.html'">ボス管理</button>
+</div>
+
 </div>
 
 <script>
@@ -465,6 +510,31 @@ document.addEventListener("keydown", function(event) {
         undoDamage();
     }
 });
+
+
+let pageZoom = Number(localStorage.getItem("pageZoom"));
+
+if (!pageZoom || pageZoom < 0.5 || pageZoom > 1.5) {
+    pageZoom = 1;
+}
+
+function applyZoom() {
+    const app = document.getElementById("app");
+    const zoomText = document.getElementById("zoomText");
+
+    app.style.zoom = pageZoom;
+    zoomText.textContent = Math.round(pageZoom * 100) + "%";
+}
+
+function changeZoom(amount) {
+    pageZoom = Math.round((pageZoom + amount) * 10) / 10;
+    pageZoom = Math.max(0.5, Math.min(1.5, pageZoom));
+
+    localStorage.setItem("pageZoom", pageZoom);
+    applyZoom();
+}
+
+applyZoom();
 
 updateBossList();
 
