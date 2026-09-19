@@ -1,16 +1,11 @@
 <!DOCTYPE html>
-
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ボス管理 - RTA Boss HP Tracker</title>
-
+<title>RTA Boss HP Tracker</title>
 <style>
-* {
-    box-sizing: border-box;
-}
-
+* { box-sizing: border-box; }
 body {
     font-family: Arial, sans-serif;
     background: #222;
@@ -20,1065 +15,464 @@ body {
     padding: 10px;
     margin: 40px auto;
 }
-
-h1, h2 {
-    text-align: center;
+h1 { text-align: center; }
+select, input, button {
+    font-size: 18px;
+    padding: 9px;
+    margin: 4px;
 }
-
-.panel {
+select { width: 100%; }
+input { width: 230px; }
+button { cursor: pointer; }
+.hp {
+    font-size: 32px;
+    text-align: center;
+    margin: 20px 0;
+}
+.bar {
+    width: 100%;
+    height: 30px;
+    background: #555;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+.bar-inner {
+    height: 100%;
+    background: #4caf50;
+    width: 100%;
+    transition: width 0.2s;
+}
+.center { text-align: center; }
+.panel, .history-panel {
     background: #333;
     padding: 15px;
     margin-top: 20px;
     border-radius: 8px;
 }
-
-input, button {
-    font-size: 18px;
-    padding: 9px;
-    margin: 4px;
+.history-panel h2 { text-align: center; margin-top: 0; }
+.history-item {
+    background: #444;
+    padding: 7px;
+    margin: 4px 0;
+    border-radius: 4px;
 }
-
-input {
-    width: calc(100% - 8px);
+#totalDamage {
+    font-size: 20px;
+    margin: 10px 0;
 }
-
-button {
-    cursor: pointer;
+.dead {
+    color: #ff4444;
+    font-weight: bold;
+    font-size: 24px;
 }
-
-.add-button,
-.back-button {
-    width: calc(100% - 8px);
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
 }
-
-.boss-list {
+.keypad button {
+    height: 60px;
+    font-size: 28px;
+    margin: 0;
+}
+.damage-button {
+    width: calc(50% - 8px);
+    height: 60px;
+    font-size: 22px;
+    margin-top: 10px;
+}
+.manage-button {
+    width: 100%;
     margin-top: 15px;
 }
-
-/* -------------------------
-   ボス一覧
-------------------------- */
-
-.boss-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-
-    background: #444;
-    padding: 8px;
-    margin: 5px 0;
-
-    border-radius: 5px;
-
-    /* ドラッグできることを分かりやすくする */
-    cursor: grab;
-
-    /* スマホで文字選択されるのを防ぐ */
-    user-select: none;
-    -webkit-user-select: none;
-
-    /* ドラッグ中のアニメーション */
-    transition: opacity 0.15s, transform 0.15s;
-}
-
-/* ドラッグ中 */
-.boss-item.dragging {
-    opacity: 0.45;
-}
-
-/* ドロップ先 */
-.boss-item.drag-over {
-    border-top: 3px solid #fff;
-}
-
-/* ドラッグ用の部分 */
-.drag-handle {
-    font-size: 24px;
-    color: #aaa;
-    padding: 4px 8px;
-    flex-shrink: 0;
-    cursor: grab;
-}
-
-.boss-info {
-    text-align: left;
-    min-width: 0;
-    flex: 1;
-    word-break: break-word;
-}
-
-.boss-actions {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-}
-
-.order-buttons {
-    display: flex;
-    flex-direction: column;
-}
-
-.order-button {
-    background: #555;
-    color: white;
-    border: none;
-    padding: 3px 9px;
-    margin: 1px;
-    font-size: 16px;
-}
-
-/* 編集 */
-.edit-button {
-    background: #555;
-    color: white;
-    border: none;
-}
-
-/* 削除 */
-.delete-button {
-    background: #b33;
-    color: white;
-    border: none;
-}
-
-.delete-button:hover {
-    background: #d44;
-}
-
 .small {
     font-size: 14px;
     color: #bbb;
 }
+/* ダメージ適用 */
+.damage-button {
+    background: #d96b6b;
+    color: white;
+    border: none;
+}
 
-.empty {
-    color: #bbb;
+/* 回復 */
+.heal-button {
+    background: #6bbf7b;
+    color: white;
+    border: none;
+}
+
+/* C・←ボタン */
+.keypad .clear-button,
+.keypad .back-button {
+    background: #5f5f5f;
+    color: white;
+    border: none;
+}
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+    touch-action: manipulation;
+}
+
+.keypad button {
+    height: 60px;
+    font-size: 28px;
+    margin: 0;
+    touch-action: manipulation;
+}
+
+.history-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.history-buttons button {
+    min-width: 120px;
+}
+
+.reset-area {
+    margin-top: 30px;
     text-align: center;
-    padding: 15px 0;
 }
 
-/* スマホでは少しコンパクトに */
-@media (max-width: 480px) {
-
-    .boss-item {
-        gap: 4px;
-        padding: 6px;
-    }
-
-    .drag-handle {
-        font-size: 20px;
-        padding: 4px;
-    }
-
-    .boss-actions button {
-        font-size: 16px;
-        padding: 7px;
-        margin: 2px;
-    }
-
-    .order-button {
-        font-size: 15px;
-        padding: 2px 7px;
-    }
+.reset-button {
+    background: #555;
+    color: white;
+    border: none;
+    padding: 8px 20px;
 }
+
 </style>
-
 </head>
-
 <body>
 
-<h1>ボス管理</h1>
+<h1>RTA Boss HP Tracker</h1>
 
-<div class="panel">
+<div class="center">
+    <select id="bossSelect"></select>
 
-```
-<h2>ボスを追加</h2>
+    <div class="hp">
+        <span id="currentHP">0</span> /
+        <span id="maxHP">0</span>
+    </div>
 
-<input
-    type="text"
-    id="bossName"
-    placeholder="ボス名"
->
+    <div class="bar">
+        <div class="bar-inner" id="hpBar"></div>
+    </div>
 
-<input
-    type="number"
-    id="bossHP"
-    placeholder="最大HP"
->
+    <input type="number" inputmode="numeric" id="damage" placeholder="ダメージ">
 
-<button
-    class="add-button"
-    onclick="addBoss()"
->
-    ボスを追加
-</button>
+    <div class="keypad">
+        <button type="button" onclick="keypadInput('1')">1</button>
+        <button type="button" onclick="keypadInput('2')">2</button>
+        <button type="button" onclick="keypadInput('3')">3</button>
+        <button type="button" onclick="keypadInput('4')">4</button>
+        <button type="button" onclick="keypadInput('5')">5</button>
+        <button type="button" onclick="keypadInput('6')">6</button>
+        <button type="button" onclick="keypadInput('7')">7</button>
+        <button type="button" onclick="keypadInput('8')">8</button>
+        <button type="button" onclick="keypadInput('9')">9</button>
+        <button type="button" class="back-button" onclick="keypadBackspace()">←</button>
+        <button type="button" onclick="keypadInput('0')">0</button>
+        <button type="button" class="clear-button" onclick="keypadClear()">C</button>
+    </div>
 
-<p class="small">
-    ボス名と最大HPを入力して追加してください。
-</p>
-```
+    <button class="damage-button" onclick="applyDamage()">ダメージ適用</button>
+    <button class="heal-button" onclick="applyHeal()">回復</button>
 
+    <div class="history-buttons">
+        <button onclick="undoDamage()">↩ Undo</button>
+        <button onclick="redoDamage()">Redo ↪</button>
+    </div>
+
+    <div class="reset-area">
+        <button class="reset-button" onclick="resetHP()">リセット</button>
+    </div>
+
+    <div id="status"></div>
+</div>
+
+<div id="totalDamage">累計ダメージ：0</div>
+
+<div class="history-panel">
+    <h2>ダメージ履歴</h2>
+    <div id="damageHistory">まだダメージ履歴がありません</div>
 </div>
 
 <div class="panel">
-
-```
-<h2>登録済みボス</h2>
-
-<p class="small">
-    「☰」をドラッグしてボスの順番を変更できます。
-</p>
-
-<div id="bossList"></div>
-```
-
+    <button class="manage-button" onclick="location.href='bosses.html'">ボス管理</button>
 </div>
-
-<button
-class="back-button"
-onclick="location.href='index.html'"
-
->
-
-```
-← HP管理に戻る
-```
-
-</button>
 
 <script>
-
-/* -------------------------
-   ボスデータ
-------------------------- */
-
-let bosses =
-    JSON.parse(localStorage.getItem("bosses")) || {};
-
-
-/* -------------------------
-   ドラッグ中のボス
-------------------------- */
-
-let draggedBoss = null;
-
-
-/* -------------------------
-   ボスデータ保存
-------------------------- */
-
-function saveBosses() {
-
-    localStorage.setItem(
-        "bosses",
-        JSON.stringify(bosses)
-    );
-
-}
-
-
-/* -------------------------
-   ボス一覧更新
-------------------------- */
-
-function updateManagementList() {
-
-    const bossList =
-        document.getElementById("bossList");
-
-    bossList.innerHTML = "";
-
-    const names =
-        Object.keys(bosses);
-
-
-    /* ボスがいない場合 */
-
-    if (names.length === 0) {
-
-        bossList.innerHTML =
-            '<div class="empty">登録されているボスはいません</div>';
-
-        return;
-    }
-
-
-    names.forEach(function(name, index) {
-
-        /* -------------------------
-           ボス1個分
-        ------------------------- */
-
-        const item =
-            document.createElement("div");
-
-        item.className = "boss-item";
-
-        item.draggable = true;
-
-        item.dataset.name = name;
-
-
-        /* -------------------------
-           ドラッグハンドル
-        ------------------------- */
-
-        const handle =
-            document.createElement("div");
-
-        handle.className =
-            "drag-handle";
-
-        handle.textContent = "☰";
-
-        handle.title =
-            "ドラッグして並び替え";
-
-
-        /* -------------------------
-           ボス情報
-        ------------------------- */
-
-        const info =
-            document.createElement("div");
-
-        info.className =
-            "boss-info";
-
-
-        const strong =
-            document.createElement("strong");
-
-        strong.textContent =
-            name;
-
-
-        const br =
-            document.createElement("br");
-
-
-        const hpText =
-            document.createTextNode(
-                "HP " +
-                Number(bosses[name]).toLocaleString()
-            );
-
-
-        info.appendChild(strong);
-        info.appendChild(br);
-        info.appendChild(hpText);
-
-
-        /* -------------------------
-           操作ボタン
-        ------------------------- */
-
-        const actions =
-            document.createElement("div");
-
-        actions.className =
-            "boss-actions";
-
-
-        /* ↑↓ */
-
-        const orderButtons =
-            document.createElement("div");
-
-        orderButtons.className =
-            "order-buttons";
-
-
-        const upButton =
-            document.createElement("button");
-
-        upButton.textContent = "↑";
-
-        upButton.className =
-            "order-button";
-
-        upButton.title =
-            "上へ移動";
-
-        upButton.onclick =
-            function(event) {
-
-                event.stopPropagation();
-
-                moveBoss(name, -1);
-
-            };
-
-
-        const downButton =
-            document.createElement("button");
-
-        downButton.textContent = "↓";
-
-        downButton.className =
-            "order-button";
-
-        downButton.title =
-            "下へ移動";
-
-        downButton.onclick =
-            function(event) {
-
-                event.stopPropagation();
-
-                moveBoss(name, 1);
-
-            };
-
-
-        orderButtons.appendChild(upButton);
-        orderButtons.appendChild(downButton);
-
-
-        /* 編集 */
-
-        const editButton =
-            document.createElement("button");
-
-        editButton.textContent =
-            "編集";
-
-        editButton.className =
-            "edit-button";
-
-        editButton.onclick =
-            function(event) {
-
-                event.stopPropagation();
-
-                editBoss(name);
-
-            };
-
-
-        /* 削除 */
-
-        const deleteButton =
-            document.createElement("button");
-
-        deleteButton.textContent =
-            "削除";
-
-        deleteButton.className =
-            "delete-button";
-
-        deleteButton.onclick =
-            function(event) {
-
-                event.stopPropagation();
-
-                deleteBoss(name);
-
-            };
-
-
-        actions.appendChild(orderButtons);
-        actions.appendChild(editButton);
-        actions.appendChild(deleteButton);
-
-
-        /* -------------------------
-           組み立て
-        ------------------------- */
-
-        item.appendChild(handle);
-        item.appendChild(info);
-        item.appendChild(actions);
-
-        bossList.appendChild(item);
-
-
-        /* -------------------------
-           ドラッグ開始
-        ------------------------- */
-
-        item.addEventListener(
-            "dragstart",
-            function(event) {
-
-                draggedBoss = name;
-
-                item.classList.add("dragging");
-
-                event.dataTransfer.effectAllowed =
-                    "move";
-
-                event.dataTransfer.setData(
-                    "text/plain",
-                    name
-                );
-
-            }
-        );
-
-
-        /* -------------------------
-           ドラッグ終了
-        ------------------------- */
-
-        item.addEventListener(
-            "dragend",
-            function() {
-
-                item.classList.remove(
-                    "dragging"
-                );
-
-                document
-                    .querySelectorAll(".boss-item")
-                    .forEach(function(el) {
-
-                        el.classList.remove(
-                            "drag-over"
-                        );
-
-                    });
-
-                draggedBoss = null;
-
-            }
-        );
-
-
-        /* -------------------------
-           ドラッグ中
-        ------------------------- */
-
-        item.addEventListener(
-            "dragover",
-            function(event) {
-
-                event.preventDefault();
-
-                if (
-                    draggedBoss &&
-                    draggedBoss !== name
-                ) {
-
-                    item.classList.add(
-                        "drag-over"
-                    );
-
-                }
-
-            }
-        );
-
-
-        /* -------------------------
-           ドラッグが離れた
-        ------------------------- */
-
-        item.addEventListener(
-            "dragleave",
-            function() {
-
-                item.classList.remove(
-                    "drag-over"
-                );
-
-            }
-        );
-
-
-        /* -------------------------
-           ドロップ
-        ------------------------- */
-
-        item.addEventListener(
-            "drop",
-            function(event) {
-
-                event.preventDefault();
-
-                item.classList.remove(
-                    "drag-over"
-                );
-
-
-                const fromName =
-                    draggedBoss;
-
-                const toName =
-                    name;
-
-
-                if (
-                    !fromName ||
-                    fromName === toName
-                ) {
-
-                    return;
-
-                }
-
-
-                reorderBosses(
-                    fromName,
-                    toName
-                );
-
-            }
-        );
-
-    });
-
-}
-
-
-/* -------------------------
-   ドラッグで並び替え
-------------------------- */
-
-function reorderBosses(
-    fromName,
-    toName
-) {
-
-    const names =
-        Object.keys(bosses);
-
-
-    const fromIndex =
-        names.indexOf(fromName);
-
-    const toIndex =
-        names.indexOf(toName);
-
-
-    if (
-        fromIndex === -1 ||
-        toIndex === -1
-    ) {
-
-        return;
-
-    }
-
-
-    /* 元の位置から削除 */
-
-    names.splice(
-        fromIndex,
-        1
-    );
-
-
-    /* ドロップ先の位置に入れる */
-
-    const newToIndex =
-        names.indexOf(toName);
-
-    names.splice(
-        newToIndex,
-        0,
-        fromName
-    );
-
-
-    /* 新しい順番でオブジェクトを作る */
-
-    const reorderedBosses = {};
-
-    names.forEach(function(name) {
-
-        reorderedBosses[name] =
-            bosses[name];
-
-    });
-
-
-    bosses =
-        reorderedBosses;
-
-
-    /* 保存 */
-
-    saveBosses();
-
-
-    /* 表示更新 */
-
-    updateManagementList();
-
-}
-
-
-/* -------------------------
-   ↑↓で並び替え
-------------------------- */
-
-function moveBoss(
-    name,
-    direction
-) {
-
-    const names =
-        Object.keys(bosses);
-
-
-    const index =
-        names.indexOf(name);
-
-
-    if (index === -1) {
-        return;
-    }
-
-
-    const newIndex =
-        index + direction;
-
-
-    /* 範囲外 */
-
-    if (
-        newIndex < 0 ||
-        newIndex >= names.length
-    ) {
-
-        return;
-
-    }
-
-
-    /* 入れ替え */
-
-    const temp =
-        names[index];
-
-    names[index] =
-        names[newIndex];
-
-    names[newIndex] =
-        temp;
-
-
-    /* 新しい順番で作り直す */
-
-    const reorderedBosses = {};
-
-    names.forEach(function(name) {
-
-        reorderedBosses[name] =
-            bosses[name];
-
-    });
-
-
-    bosses =
-        reorderedBosses;
-
-
-    saveBosses();
-
-    updateManagementList();
-
-}
-
-
-/* -------------------------
-   ボス追加
-------------------------- */
-
-function addBoss() {
-
-    const nameInput =
-        document.getElementById(
-            "bossName"
-        );
-
-    const hpInput =
-        document.getElementById(
-            "bossHP"
-        );
-
-
-    const name =
-        nameInput.value.trim();
-
-    const hp =
-        Number(hpInput.value);
-
-
-    if (!name) {
-
-        alert(
-            "ボス名を入力してください"
-        );
-
-        return;
-
-    }
-
-
-    if (!hp || hp <= 0) {
-
-        alert(
-            "正しいHPを入力してください"
-        );
-
-        return;
-
-    }
-
-
-    /* 同名チェック */
-
-    if (
-        bosses[name] !== undefined
-    ) {
-
-        alert(
-            "その名前のボスはすでに登録されています"
-        );
-
-        return;
-
-    }
-
-
-    /*
-       オブジェクトの最後に追加
-       → 一覧でも最後に追加される
-    */
-
-    bosses[name] = hp;
-
-
-    saveBosses();
-
-
-    /*
-       追加したボスを
-       次に開いたときの選択対象にする
-    */
-
-    localStorage.setItem(
-        "selectedBoss",
-        name
-    );
-
-
-    updateManagementList();
-
-
-    nameInput.value = "";
-    hpInput.value = "";
-
-    nameInput.focus();
-
-}
-
-
-/* -------------------------
-   ボス削除
-------------------------- */
-
-function deleteBoss(name) {
-
-    if (
-        !confirm(
-            "「" +
-            name +
-            "」を削除しますか？"
-        )
-    ) {
-
-        return;
-
-    }
-
-
-    delete bosses[name];
-
-
-    saveBosses();
-
-
-    /*
-       現在選択中のボスを削除した場合
-       → 残っている最初のボスを選択
-    */
-
-    if (
-        localStorage.getItem(
-            "selectedBoss"
-        ) === name
-    ) {
-
-        const remaining =
-            Object.keys(bosses);
-
-
-        localStorage.setItem(
-            "selectedBoss",
-            remaining.length > 0
-                ? remaining[0]
-                : ""
-        );
-
-    }
-
-
-    updateManagementList();
-
-}
-
-
-/* -------------------------
-   ボス編集
-------------------------- */
-
-function editBoss(name) {
-
-    const newName =
-        prompt(
-            "新しいボス名",
-            name
-        );
-
-
-    if (newName === null) {
-        return;
-    }
-
-
-    const trimmedName =
-        newName.trim();
-
-
-    if (!trimmedName) {
-
-        alert(
-            "ボス名を入力してください"
-        );
-
-        return;
-
-    }
-
-
-    const newHP =
-        prompt(
-            "最大HP",
-            bosses[name]
-        );
-
-
-    if (newHP === null) {
-        return;
-    }
-
-
-    const hp =
-        Number(newHP);
-
-
-    if (!hp || hp <= 0) {
-
-        alert(
-            "正しいHPを入力してください"
-        );
-
-        return;
-
-    }
-
-
-    /*
-       名前変更先が既に存在する場合
-    */
-
-    if (
-        trimmedName !== name &&
-        bosses[trimmedName] !== undefined
-    ) {
-
-        alert(
-            "その名前のボスはすでに登録されています"
-        );
-
-        return;
-
-    }
-
-
-    /*
-       重要：
-       delete → 再追加すると
-       順番が最後に移動してしまうので、
-
-       元の順番を維持したまま
-       新しいオブジェクトを作る
-    */
-
-    const names =
-        Object.keys(bosses);
-
-
-    const newBosses = {};
-
-
-    names.forEach(function(bossName) {
-
-        if (bossName === name) {
-
-            newBosses[trimmedName] =
-                hp;
-
-        } else {
-
-            newBosses[bossName] =
-                bosses[bossName];
-
+let bosses = JSON.parse(localStorage.getItem("bosses")) || {};
+let selectedBoss = localStorage.getItem("selectedBoss") || "";
+
+let maxHP = 0;
+let currentHP = 0;
+let hpHistory = [];
+let damageHistory = [];
+let redoHistory = [];
+
+const bossSelect = document.getElementById("bossSelect");
+const damageInput = document.getElementById("damage");
+const currentHPText = document.getElementById("currentHP");
+const maxHPText = document.getElementById("maxHP");
+const hpBar = document.getElementById("hpBar");
+const status = document.getElementById("status");
+
+let audioContext = null;
+
+function playKeySound() {
+    try {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
 
-    });
+        if (audioContext.state === "suspended") {
+            audioContext.resume();
+        }
 
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
 
-    bosses =
-        newBosses;
+        oscillator.type = "square";
+        oscillator.frequency.setValueAtTime(700, audioContext.currentTime);
 
-
-    saveBosses();
-
-
-    /*
-       選択中ボスの名前も変更
-    */
-
-    if (
-        localStorage.getItem(
-            "selectedBoss"
-        ) === name
-    ) {
-
-        localStorage.setItem(
-            "selectedBoss",
-            trimmedName
+        gain.gain.setValueAtTime(0.08, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(
+            0.001,
+            audioContext.currentTime + 0.05
         );
 
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.05);
+    } catch (e) {
+        console.warn("音声を再生できませんでした:", e);
     }
-
-
-    updateManagementList();
-
 }
 
+function keypadInput(number) {
+    damageInput.value += number;
+    playKeySound();
+}
 
-/* -------------------------
-   初期表示
-------------------------- */
+function keypadBackspace() {
+    damageInput.value = damageInput.value.slice(0, -1);
+    playKeySound();
+}
 
-updateManagementList();
+function keypadClear() {
+    damageInput.value = "";
+    playKeySound();
+}
 
+function updateBossList() {
+    bossSelect.innerHTML = "";
+
+    for (const name in bosses) {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name + "（HP " + Number(bosses[name]).toLocaleString() + "）";
+        bossSelect.appendChild(option);
+    }
+
+    if (selectedBoss && bosses[selectedBoss]) {
+        bossSelect.value = selectedBoss;
+    } else if (bossSelect.options.length > 0) {
+        selectedBoss = bossSelect.options[0].value;
+        bossSelect.value = selectedBoss;
+    }
+}
+
+function selectBoss() {
+    const name = bossSelect.value;
+    selectedBoss = name;
+    localStorage.setItem("selectedBoss", name);
+
+    hpHistory = [];
+    damageHistory = [];
+    redoHistory = [];
+
+    if (!name || !bosses[name]) {
+        maxHP = 0;
+        currentHP = 0;
+        updateDisplay();
+        updateDamageHistory();
+        return;
+    }
+
+    maxHP = Number(bosses[name]);
+    currentHP = maxHP;
+
+    updateDisplay();
+    updateDamageHistory();
+}
+
+bossSelect.addEventListener("change", selectBoss);
+
+function applyDamage() {
+    const damage = Number(damageInput.value);
+    if (!damage || damage <= 0 || maxHP <= 0) return;
+
+    const previousHP = currentHP;
+    const newHP = Math.max(0, currentHP - damage);
+
+    hpHistory.push(previousHP);
+    damageHistory.push({ type: "damage", value: damage });
+    redoHistory = [];
+
+    currentHP = newHP;
+    damageInput.value = "";
+
+    updateDisplay();
+    updateDamageHistory();
+}
+
+function applyHeal() {
+    const heal = Number(damageInput.value);
+    if (!heal || heal <= 0 || maxHP <= 0) return;
+
+    const previousHP = currentHP;
+    const newHP = Math.min(maxHP, currentHP + heal);
+
+    hpHistory.push(previousHP);
+    damageHistory.push({ type: "heal", value: heal });
+    redoHistory = [];
+
+    currentHP = newHP;
+    damageInput.value = "";
+
+    updateDisplay();
+    updateDamageHistory();
+}
+
+function undoDamage() {
+    if (hpHistory.length === 0 || damageHistory.length === 0) return;
+
+    const previousHP = hpHistory.pop();
+    const action = damageHistory.pop();
+
+    redoHistory.push({
+        previousHP: previousHP,
+        newHP: currentHP,
+        action: action
+    });
+
+    currentHP = previousHP;
+
+    updateDisplay();
+    updateDamageHistory();
+}
+
+function redoDamage() {
+    if (redoHistory.length === 0) return;
+
+    const item = redoHistory.pop();
+
+    hpHistory.push(item.previousHP);
+    damageHistory.push(item.action);
+    currentHP = item.newHP;
+
+    updateDisplay();
+    updateDamageHistory();
+}
+
+function resetHP() {
+
+    if (!confirm("HPをリセットしますか？")) {
+        return;
+    }
+
+    currentHP = maxHP;
+    hpHistory = [];
+    damageHistory = [];
+    redoHistory = [];
+
+    updateDisplay();
+    updateDamageHistory();
+}
+
+function updateDisplay() {
+    currentHPText.textContent = currentHP.toLocaleString();
+    maxHPText.textContent = maxHP.toLocaleString();
+
+    const percent = maxHP > 0 ? (currentHP / maxHP) * 100 : 0;
+    hpBar.style.width = percent + "%";
+
+    if (currentHP <= 0 && maxHP > 0) {
+        status.innerHTML = '<span class="dead">DEAD!</span>';
+    } else if (maxHP > 0) {
+        status.textContent = "残り " + percent.toFixed(2) + "%";
+    } else {
+        status.textContent = "ボスを追加してください";
+    }
+}
+
+function updateDamageHistory() {
+    const history = document.getElementById("damageHistory");
+
+    const totalDamage = damageHistory.reduce((sum, item) => {
+        return item.type === "damage" ? sum + item.value : sum;
+    }, 0);
+
+    document.getElementById("totalDamage").textContent =
+        "累計ダメージ：" + totalDamage.toLocaleString();
+
+    if (damageHistory.length === 0) {
+        history.innerHTML = "まだダメージ履歴がありません";
+        return;
+    }
+
+    history.innerHTML = "";
+
+    [...damageHistory].reverse().forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+
+        if (item.type === "damage") {
+            div.textContent = (index + 1) + ".  -" + item.value.toLocaleString();
+        } else {
+            div.textContent = (index + 1) + ".  +" + item.value.toLocaleString() + " 回復";
+        }
+
+        history.appendChild(div);
+    });
+}
+
+damageInput.addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        applyDamage();
+    }
+});
+
+document.addEventListener("keydown", function(event) {
+    if (event.target === damageInput) return;
+
+    if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        undoDamage();
+    }
+});
+
+updateBossList();
+
+if (bossSelect.options.length > 0) {
+    selectBoss();
+} else {
+    updateDisplay();
+}
 </script>
-
 </body>
 </html>
