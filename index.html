@@ -126,6 +126,30 @@ button { cursor: pointer; }
     margin: 0;
     touch-action: manipulation;
 }
+
+.history-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.history-buttons button {
+    min-width: 120px;
+}
+
+.reset-area {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.reset-button {
+    background: #555;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+}
+
 </style>
 </head>
 <body>
@@ -164,9 +188,14 @@ button { cursor: pointer; }
     <button class="damage-button" onclick="applyDamage()">ダメージ適用</button>
     <button class="heal-button" onclick="applyHeal()">回復</button>
 
-    <br>
-    <button onclick="resetHP()">リセット</button>
-    <button onclick="undoDamage()">↩ Undo</button>
+    <div class="history-buttons">
+        <button onclick="undoDamage()">↩ Undo</button>
+        <button onclick="redoDamage()">Redo ↪</button>
+    </div>
+
+    <div class="reset-area">
+        <button class="reset-button" onclick="resetHP()">リセット</button>
+    </div>
 
     <div id="status"></div>
 </div>
@@ -190,6 +219,7 @@ let maxHP = 0;
 let currentHP = 0;
 let hpHistory = [];
 let damageHistory = [];
+let redoHistory = [];
 
 const bossSelect = document.getElementById("bossSelect");
 const damageInput = document.getElementById("damage");
@@ -272,6 +302,7 @@ function selectBoss() {
 
     hpHistory = [];
     damageHistory = [];
+    redoHistory = [];
 
     if (!name || !bosses[name]) {
         maxHP = 0;
@@ -294,10 +325,14 @@ function applyDamage() {
     const damage = Number(damageInput.value);
     if (!damage || damage <= 0 || maxHP <= 0) return;
 
-    hpHistory.push(currentHP);
-    damageHistory.push({ type: "damage", value: damage });
+    const previousHP = currentHP;
+    const newHP = Math.max(0, currentHP - damage);
 
-    currentHP = Math.max(0, currentHP - damage);
+    hpHistory.push(previousHP);
+    damageHistory.push({ type: "damage", value: damage });
+    redoHistory = [];
+
+    currentHP = newHP;
     damageInput.value = "";
 
     updateDisplay();
@@ -308,10 +343,14 @@ function applyHeal() {
     const heal = Number(damageInput.value);
     if (!heal || heal <= 0 || maxHP <= 0) return;
 
-    hpHistory.push(currentHP);
-    damageHistory.push({ type: "heal", value: heal });
+    const previousHP = currentHP;
+    const newHP = Math.min(maxHP, currentHP + heal);
 
-    currentHP = Math.min(maxHP, currentHP + heal);
+    hpHistory.push(previousHP);
+    damageHistory.push({ type: "heal", value: heal });
+    redoHistory = [];
+
+    currentHP = newHP;
     damageInput.value = "";
 
     updateDisplay();
@@ -319,10 +358,31 @@ function applyHeal() {
 }
 
 function undoDamage() {
-    if (hpHistory.length === 0) return;
+    if (hpHistory.length === 0 || damageHistory.length === 0) return;
 
-    currentHP = hpHistory.pop();
-    damageHistory.pop();
+    const previousHP = hpHistory.pop();
+    const action = damageHistory.pop();
+
+    redoHistory.push({
+        previousHP: previousHP,
+        newHP: currentHP,
+        action: action
+    });
+
+    currentHP = previousHP;
+
+    updateDisplay();
+    updateDamageHistory();
+}
+
+function redoDamage() {
+    if (redoHistory.length === 0) return;
+
+    const item = redoHistory.pop();
+
+    hpHistory.push(item.previousHP);
+    damageHistory.push(item.action);
+    currentHP = item.newHP;
 
     updateDisplay();
     updateDamageHistory();
@@ -337,6 +397,7 @@ function resetHP() {
     currentHP = maxHP;
     hpHistory = [];
     damageHistory = [];
+    redoHistory = [];
 
     updateDisplay();
     updateDamageHistory();
