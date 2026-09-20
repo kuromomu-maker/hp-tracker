@@ -517,6 +517,37 @@ damageInput.addEventListener("keydown", function(event) {
 document.addEventListener("keydown", function(event) {
     if (event.target === damageInput) return;
 
+    // PCの数字キー・テンキーでダメージ欄に直接入力
+    if (/^[0-9]$/.test(event.key)) {
+        event.preventDefault();
+        keypadInput(event.key);
+        damageInput.focus();
+        return;
+    }
+
+    // Backspaceで1文字削除
+    if (event.key === "Backspace") {
+        event.preventDefault();
+        keypadBackspace();
+        damageInput.focus();
+        return;
+    }
+
+    // Deleteで入力クリア
+    if (event.key === "Delete") {
+        event.preventDefault();
+        keypadClear();
+        damageInput.focus();
+        return;
+    }
+
+    // Enterでダメージ適用
+    if (event.key === "Enter") {
+        event.preventDefault();
+        applyDamage();
+        return;
+    }
+
     if (event.key === "ArrowLeft") {
         event.preventDefault();
         undoDamage();
