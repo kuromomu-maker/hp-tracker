@@ -515,6 +515,34 @@ damageInput.addEventListener("keydown", function(event) {
 });
 
 document.addEventListener("keydown", function(event) {
+    // 左右矢印は入力欄にカーソルがあるときもUndo/Redoに使用
+    if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        undoDamage();
+        return;
+    }
+
+    if (event.key === "ArrowRight") {
+        event.preventDefault();
+        redoDamage();
+        return;
+    }
+
+    // 上下矢印では入力欄の数値を増減させない
+    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        event.preventDefault();
+        return;
+    }
+
+    // Deleteは入力欄にカーソルがあるときもクリア
+    if (event.key === "Delete") {
+        event.preventDefault();
+        keypadClear();
+        damageInput.focus();
+        return;
+    }
+
+    // 入力欄にカーソルがある場合は、通常の文字入力を優先
     if (event.target === damageInput) return;
 
     // PCの数字キー・テンキーでダメージ欄に直接入力
@@ -533,32 +561,10 @@ document.addEventListener("keydown", function(event) {
         return;
     }
 
-    // Deleteで入力クリア
-    if (event.key === "Delete") {
-        event.preventDefault();
-        keypadClear();
-        damageInput.focus();
-        return;
-    }
-
     // Enterでダメージ適用
     if (event.key === "Enter") {
         event.preventDefault();
         applyDamage();
-        return;
-    }
-
-    // 左矢印でUndo
-    if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        undoDamage();
-        return;
-    }
-
-    // 右矢印でRedo
-    if (event.key === "ArrowRight") {
-        event.preventDefault();
-        redoDamage();
         return;
     }
 });
